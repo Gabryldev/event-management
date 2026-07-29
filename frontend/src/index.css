@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* your existing code... */
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+}
+
+
+/* =========================
+   GLOBAL RESPONSIVE FIX
+========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+
+/* Prevent images from breaking layout */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 900px) {
+
+  .ticket-stub {
+    flex-direction: column;
+  }
+
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+  body {
+    font-size: 14px;
+  }
+
+
+  .ticket-stub {
+    width: 100%;
+  }
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+
+body{
+    margin:0;
+    background:#0B0D10;
+    color:#EDE6D6;
+    font-family:'Inter',sans-serif;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+input{
+    background:transparent;
+}
+
+input:focus{
+    outline:none;
+}
+
+  .btn-primary,
+  .btn-amber,
+  .btn-outline {
+    width: 100%;
+    text-align: center;
+  }
+
+
+  .input-field {
+    width: 100%;
+  }
+
+
+  /* Fix Tailwind grids */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+
+  /* Fix flex overflow */
+  .flex {
+    flex-wrap: wrap;
+  }
+
+}
