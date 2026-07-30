@@ -31,18 +31,9 @@ const Navbar = () => {
 
 
         {/* Brand */}
-        <Link
-          to="/"
-          className="flex items-center gap-3 font-display text-xl font-semibold"
-        >
-
-          <div className="w-10 h-10 rounded-full bg-amber text-ink flex items-center justify-center font-bold">
-            EA
-          </div>
-
-        <Link
+<Link
   to="/"
-  className="flex items-center gap-3 group"
+  className="flex items-center gap-3 group font-display"
 >
   <div
     className="
@@ -64,37 +55,18 @@ const Navbar = () => {
   </div>
 
   <div className="leading-tight">
-    <h1
-      className="
-        font-display
-        text-lg
-        font-bold
-        tracking-wide
-        text-paper
-      "
-    >
+    <h1 className="text-lg font-bold tracking-wide text-paper">
       Event
       <span className="text-amber">
         Alchemists
       </span>
     </h1>
 
-    <p
-      className="
-        text-[10px]
-        uppercase
-        tracking-[3px]
-        text-paper/60
-      "
-    >
+    <p className="text-[10px] uppercase tracking-[3px] text-paper/60">
       Premium Experiences
     </p>
   </div>
 </Link>
-
-        </Link>
-
-
 
         {/* Desktop Menu */}
         <nav className="hidden md:flex items-center gap-6 text-sm">
