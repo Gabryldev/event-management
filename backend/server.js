@@ -13,11 +13,10 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 connectDB();
 
 const app = express();
-
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://eventalchemists.netlify.app",
-];
+  process.env.CLIENT_URL,
+].filter(Boolean);
 
 app.use(
   cors({
@@ -45,6 +44,12 @@ app.use('/api/analytics', analyticsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
-
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
