@@ -3,7 +3,7 @@ import axios from "axios";
 console.log("API URL:", import.meta.env.VITE_API_URL);
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: "https://event-management-14xr.onrender.com/api",
 });
 
 api.interceptors.request.use((config) => {
