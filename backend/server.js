@@ -23,21 +23,47 @@ const app = express();
 })();
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      // Allow requests with no origin (e.g. Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
+const localDevOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1):(5173|5174)$/;
+
+const corsOptions = {
+  origin(origin, callback) {
+    const requestOrigin = origin?.trim();
+
+    // Allow requests with no origin (e.g. Postman, server-to-server)
+    if (!requestOrigin) {
+      return callback(null, true);
+    }
+
+    if (
+      allowedOrigins.includes(requestOrigin) ||
+      localDevOriginRegex.test(requestOrigin)
+    ) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Not allowed by CORS: ${requestOrigin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Origin", "Accept"],
+};
+
+app.use(cors(corsOptions));
+app.use((req, res, next) => {
+  const requestOrigin = req.headers.origin?.trim();
+  if (!requestOrigin || allowedOrigins.includes(requestOrigin) || localDevOriginRegex.test(requestOrigin)) {
+    res.header('Access-Control-Allow-Origin', requestOrigin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, Accept');
+  }
+  next();
+});
+app.options("*", (req, res) => res.sendStatus(200));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 // Serve uploaded flyers statically
