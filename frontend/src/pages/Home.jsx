@@ -14,7 +14,9 @@ const fetchEvents = async (q = "") => {
       params: {
         search: q,
         upcoming: "true",
+        
       },
+      
     });
 
     console.log("Events API Response:", res.data);
@@ -35,9 +37,7 @@ const fetchEvents = async (q = "") => {
     return () => clearTimeout(delay);
   }, [search]);
 
-  useEffect(() => {
-  fetchEvents("");
-}, []);
+
   const handleSearch = (e) => {
     e.preventDefault();
     fetchEvents(search);

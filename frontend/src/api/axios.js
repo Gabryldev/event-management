@@ -1,9 +1,10 @@
 import axios from "axios";
 
-console.log("API URL:", import.meta.env.VITE_API_URL);
+const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+console.log("API URL:", baseURL);
 
 const api = axios.create({
-  baseURL: "https://event-management-14xr.onrender.com/api",
+  baseURL,
 });
 
 api.interceptors.request.use((config) => {
