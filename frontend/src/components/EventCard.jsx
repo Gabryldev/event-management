@@ -13,8 +13,12 @@ const formatDate = (d) => {
 const EventCard = ({ event }) => {
   if (!event) return null;
 
-  const flyerUrl = event.flyer?.url || null;
+const API_URL = "https://event-management-14xr.onrender.com";
 
+const flyerUrl = event.flyer?.url
+  ? `${API_URL}${event.flyer.url}`
+  : null;
+console.log(event.flyer);
   return (
     <Link
       to={`/events/${event._id}`}
