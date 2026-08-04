@@ -10,9 +10,17 @@ const eventRoutes = require('./routes/eventRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 
-connectDB();
-
 const app = express();
+
+(async () => {
+  try {
+    await connectDB();
+    console.log("✅ Database connected");
+  } catch (err) {
+    console.error("❌ Database failed to connect");
+    console.error(err);
+  }
+})();
 const allowedOrigins = [
   "http://localhost:5173",
   process.env.CLIENT_URL,
