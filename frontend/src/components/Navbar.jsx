@@ -165,11 +165,11 @@ const Navbar = () => {
                 className="flex items-center gap-2 hover:text-amber"
               >
 
-                <img
-                  src={user.profileImage}
-                  alt="profile"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+               <img
+  src={user.profileImage || "/default-avatar.png"}
+  alt="profile"
+  className="w-10 h-10 rounded-full object-cover"
+/>
 
 
                 <span>
@@ -253,11 +253,11 @@ const Navbar = () => {
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 mb-6"
             >
-
-              <img
-                src={user.profileImage}
-                className="w-12 h-12 rounded-full"
-              />
+<img
+  src={user.profileImage || "/default-avatar.png"}
+  alt="profile"
+  className="w-10 h-10 rounded-full object-cover"
+/>
 
 
               <div>

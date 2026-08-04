@@ -139,7 +139,7 @@ const EventDetails = () => {
 
       <div>
         <div className="card p-5 sticky top-20">
-          <p className="font-mono text-2xl mb-1">{event.price > 0 ? `$${event.price.toFixed(2)}` : 'Free'}</p>
+          <p className="font-mono text-2xl mb-1">{event.price > 0 ? `$${Number(event.price || 0).toFixed(2)}` : 'Free'}</p>
           <p className="text-sm text-slate-muted mb-4">
             {event.seatsAvailable > 0 ? `${event.seatsAvailable} of ${event.capacity} seats left` : 'Sold out'}
           </p>
@@ -150,7 +150,7 @@ const EventDetails = () => {
             <div className="mb-4">
               <p className="text-sm font-medium mb-2">Choose a seat</p>
               <div className="grid grid-cols-8 gap-1 max-h-56 overflow-y-auto pr-1">
-                {event.seatMap.map((seat) => (
+                {event.seatMap?.map((seat) => (
                   <button
                     key={seat.label}
                     disabled={seat.status !== 'available'}

@@ -63,16 +63,13 @@ eventSchema.set('toJSON', { virtuals: true });
 eventSchema.set('toObject', { virtuals: true });
 
 // Helper to auto-generate a seat map (rows x cols) when seatingType = assigned
-eventSchema.methods.generateSeatMap = function (rows, cols) {
-  const seats = [];
-  for (let r = 0; r < rows; r++) {
-    const rowLabel = String.fromCharCode(65 + r);
-    for (let c = 1; c <= cols; c++) {
-      seats.push({ label: `${rowLabel}${c}`, status: 'available' });
-    }
+eventSchema.virtual("seatsAvailable").get(function () {
+  if (this.seatingType === "assigned") {
+    return (this.seatMap || []).filter(
+      (seat) => seat.status === "available"
+    ).length;
   }
-  this.seatMap = seats;
-  this.capacity = seats.length;
-};
 
+  return this.capacity - (this.seatsBooked || 0);
+});
 module.exports = mongoose.model('Event', eventSchema);

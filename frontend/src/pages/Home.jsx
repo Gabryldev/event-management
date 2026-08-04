@@ -6,16 +6,27 @@ const Home = () => {
   const [events, setEvents] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+const fetchEvents = async (q = "") => {
+  setLoading(true);
 
-  const fetchEvents = async (q = '') => {
-    setLoading(true);
-    try {
-      const res = await api.get('/events', { params: { search: q, upcoming: 'true' } });
-      setEvents(res.data.data);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const res = await api.get("/events", {
+      params: {
+        search: q,
+        upcoming: "true",
+      },
+    });
+
+    console.log("Events API Response:", res.data);
+
+    setEvents(Array.isArray(res.data.data) ? res.data.data : []);
+  } catch (err) {
+    console.error("Fetch events error:", err);
+    setEvents([]);
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
     const delay = setTimeout(() => {
       fetchEvents(search);
@@ -57,21 +68,23 @@ const Home = () => {
       </section>
 
       <section className="max-w-6xl mx-auto px-4 py-10">
-        {loading ? (
-          <p className="text-slate-muted">Loading events...</p>
-        ) : events.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="font-display text-xl mb-1">No events found</p>
-            <p className="text-slate-muted">Check back soon, or try a different search.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {events.map((ev) => (
-              <EventCard key={ev._id} event={ev} />
-            ))}
-          </div>
-        )}
-      </section>
+  {loading ? (
+    <p className="text-slate-muted">Loading events...</p>
+  ) : events?.length === 0 ? (
+    <div className="text-center py-16">
+      <p className="font-display text-xl mb-1">No events found</p>
+      <p className="text-slate-muted">
+        Check back soon, or try a different search.
+      </p>
+    </div>
+  ) : (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {events.map((ev) => (
+        <EventCard key={ev._id} event={ev} />
+      ))}
+    </div>
+  )}
+</section>
     </div>
   );
 };
