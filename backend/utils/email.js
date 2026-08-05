@@ -1,16 +1,18 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || "smtp.gmail.com",
-  port: Number(process.env.EMAIL_PORT) || 587,
-  secure: false,
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
+
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
-
-
 // Test SMTP connection when server starts
 transporter.verify((error) => {
   if (error) {
@@ -28,20 +30,29 @@ const sendEmail = async ({
   attachments = [] 
 }) => {
   try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-      to,
-      subject,
-      html,
-      attachments,
-    });
+    
+    console.log("TO:", to);
+console.log("FROM:", process.env.EMAIL_FROM || process.env.EMAIL_USER);
+const info = await transporter.sendMail({
+  from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+  to,
+  subject,
+  html,
+  attachments,
+});
 
-    console.log(`Email sent: ${info.messageId}`);
-    return info;
+console.log("Accepted:", info.accepted);
+console.log("Rejected:", info.rejected);
+console.log("Envelope:", info.envelope);
+
+return {
+  success: true,
+  info,
+};
 
   } catch (err) {
     console.error("Email send failed:", err.message);
-    return null;
+    return { success: false, error: err.message };
   }
 };
 

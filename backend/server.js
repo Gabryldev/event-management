@@ -21,13 +21,17 @@ const app = express();
     console.error(err);
   }
 })();
+
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   process.env.CLIENT_URL,
+  ...(process.env.ALLOWED_ORIGINS || "").split(",").map((url) => url.trim()),
 ].filter(Boolean);
+console.log("Allowed Origins:", allowedOrigins);
 
 const localDevOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1):(5173|5174)$/;
+const vercelOriginRegex = /^https?:\/\/([A-Za-z0-9-]+\.)?vercel\.app$/;
 
 const corsOptions = {
   origin(origin, callback) {
@@ -40,7 +44,8 @@ const corsOptions = {
 
     if (
       allowedOrigins.includes(requestOrigin) ||
-      localDevOriginRegex.test(requestOrigin)
+      localDevOriginRegex.test(requestOrigin) ||
+      vercelOriginRegex.test(requestOrigin)
     ) {
       return callback(null, true);
     }
@@ -72,6 +77,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'API is running' }));
 
 app.use('/api/auth', authRoutes);
+console.log("✅ Auth routes loaded");
 app.use('/api/events', eventRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/analytics', analyticsRoutes);

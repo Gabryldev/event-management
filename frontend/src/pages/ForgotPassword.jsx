@@ -18,10 +18,18 @@ const ForgotPassword = () => {
       });
 
       toast.success(res.data.message);
+
+      if (res.data.debug?.response) {
+        toast.info(`SMTP response: ${res.data.debug.response}`);
+        console.debug("Forgot password debug:", res.data.debug);
+      }
+
       setEmail("");
     } catch (err) {
       toast.error(
-        err.response?.data?.message || "Something went wrong"
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          "Something went wrong"
       );
     } finally {
       setLoading(false);

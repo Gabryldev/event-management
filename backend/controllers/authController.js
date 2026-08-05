@@ -50,12 +50,21 @@ const registerUser = asyncHandler(async (req, res) => {
     }),
   });
 
-  res.status(201).json({
+  const responsePayload = {
     success: true,
     message:
       "Verification code sent successfully. Please check your email.",
     email: user.email,
-  });
+  };
+
+  if (process.env.NODE_ENV !== "production") {
+    responsePayload.debug = {
+      sentTo: user.email,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    };
+  }
+
+  res.status(201).json(responsePayload);
 });
 const verifyEmail = asyncHandler(async (req, res) => {
   const { email, code } = req.body;
@@ -203,28 +212,48 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
-    await sendEmail({
-      to: user.email,
-      subject: "Password Reset",
-      html: `
-        <h2>Password Reset</h2>
+console.log("Forgot password request received for:", email);
 
-        <p>You requested a password reset.</p>
+const result = await sendEmail({
+  to: user.email,
+  subject: "Password Reset",
+  html: `
+    <h2>Password Reset</h2>
 
-        <p>
-          <a href="${resetUrl}">
-            Reset Password
-          </a>
-        </p>
+    <p>You requested a password reset.</p>
 
-        <p>This link expires in 10 minutes.</p>
-      `,
-    });
+    <p>
+      <a href="${resetUrl}">
+        Reset Password
+      </a>
+    </p>
+  `,
+});
 
-    res.json({
+console.log("sendEmail result:", result);
+if (!result.success) {
+  console.error("Forgot password email failed for:", email, result.error);
+  return res.status(500).json({
+    success: false,
+    message: "Failed to send reset email. Check email settings.",
+    error: result.error,
+  });
+}
+
+    const responsePayload = {
       success: true,
       message: "Password reset email sent",
-    });
+    };
+
+    if (process.env.NODE_ENV !== "production") {
+      responsePayload.debug = {
+        messageId: result.info?.messageId,
+        response: result.info?.response,
+        sentTo: user.email,
+      };
+    }
+
+    res.json(responsePayload);
   } catch (err) {
     console.log(err);
 
