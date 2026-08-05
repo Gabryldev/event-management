@@ -15,8 +15,10 @@ const EventCard = ({ event }) => {
 
 const API_URL = "https://event-management-14xr.onrender.com";
 
+const API_BASE = 'https://event-management-14xr.onrender.com';
+
 const flyerUrl = event.flyer?.url
-  ? `${API_URL}${event.flyer.url}`
+  ? `${API_BASE}${event.flyer.url}`
   : null;
 console.log(event.flyer);
   return (
