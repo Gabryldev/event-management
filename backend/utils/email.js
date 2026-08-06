@@ -1,9 +1,17 @@
 const fs = require("fs");
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: false, // Use false for port 587
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
-const FROM_ADDRESS = "onboarding@resend.dev";
+const FROM_ADDRESS = process.env.EMAIL_FROM;
 const normalizeAttachments = (attachments = []) => {
   return attachments.map(({ filename, path }) => {
     if (path.startsWith("data:")) {
@@ -17,44 +25,33 @@ const normalizeAttachments = (attachments = []) => {
 };
 
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
-  console.log("=== USING RESEND EMAIL SERVICE ===");
   try {
-    console.log("TO:", to);
-    console.log("FROM:", FROM_ADDRESS);
+    console.log("=== USING NODEMAILER ===");
 
-    // Ensure `to` is an array as expected by many providers
-    const toList = Array.isArray(to) ? to : [to];
-
-    // Call Resend and log full response for easier debugging
-    const response = await resend.emails.send({
+    const info = await transporter.sendMail({
       from: FROM_ADDRESS,
-      to: toList,
+      to,
       subject,
       html,
-      attachments: normalizeAttachments(attachments),
+      attachments,
     });
 
-    console.log("Resend send response:", response);
-
-    // Older or different SDK shapes may wrap data; handle common cases
-    const messageId = response?.id || response?.data?.id;
-    const error = response?.error || response?.errors?.[0];
-
-    if (error) {
-      console.error("Email send failed:", error.message || error);
-      return { success: false, error: error.message || String(error) };
-    }
+    console.log("Email sent:", info.messageId);
 
     return {
       success: true,
       info: {
-        messageId,
-        response: "accepted by Resend",
+        messageId: info.messageId,
+        response: info.response,
       },
     };
   } catch (err) {
-    console.error("Email send failed:", err && err.message ? err.message : err);
-    return { success: false, error: err && err.message ? err.message : String(err) };
+    console.error("Email send failed:", err);
+
+    return {
+      success: false,
+      error: err.message,
+    };
   }
 };
 
