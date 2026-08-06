@@ -1,61 +1,62 @@
-const nodemailer = require("nodemailer");
+const fs = require("fs");
+const { Resend } = require("resend");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-// Test SMTP connection when server starts
-transporter.verify((error) => {
-  if (error) {
-    console.error("SMTP connection failed:", error.message);
-  } else {
-    console.log("SMTP server ready ✅");
-  }
-});
+const FROM_ADDRESS = "onboarding@resend.dev";
+const normalizeAttachments = (attachments = []) => {
+  return attachments.map(({ filename, path }) => {
+    if (path.startsWith("data:")) {
+      const base64 = path.split(",")[1];
+      return { filename, content: base64 };
+    }
 
+    const content = fs.readFileSync(path).toString("base64");
+    return { filename, content };
+  });
+};
 
-const sendEmail = async ({ 
-  to, 
-  subject, 
-  html, 
-  attachments = [] 
-}) => {
+const sendEmail = async ({ to, subject, html, attachments = [] }) => {
+  console.log("=== USING RESEND EMAIL SERVICE ===");
   try {
-    
     console.log("TO:", to);
-console.log("FROM:", process.env.EMAIL_FROM || process.env.EMAIL_USER);
-const info = await transporter.sendMail({
-  from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-  to,
-  subject,
-  html,
-  attachments,
-});
+    console.log("FROM:", FROM_ADDRESS);
 
-console.log("Accepted:", info.accepted);
-console.log("Rejected:", info.rejected);
-console.log("Envelope:", info.envelope);
+    // Ensure `to` is an array as expected by many providers
+    const toList = Array.isArray(to) ? to : [to];
 
-return {
-  success: true,
-  info,
-};
+    // Call Resend and log full response for easier debugging
+    const response = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: toList,
+      subject,
+      html,
+      attachments: normalizeAttachments(attachments),
+    });
 
+    console.log("Resend send response:", response);
+
+    // Older or different SDK shapes may wrap data; handle common cases
+    const messageId = response?.id || response?.data?.id;
+    const error = response?.error || response?.errors?.[0];
+
+    if (error) {
+      console.error("Email send failed:", error.message || error);
+      return { success: false, error: error.message || String(error) };
+    }
+
+    return {
+      success: true,
+      info: {
+        messageId,
+        response: "accepted by Resend",
+      },
+    };
   } catch (err) {
-    console.error("Email send failed:", err.message);
-    return { success: false, error: err.message };
+    console.error("Email send failed:", err && err.message ? err.message : err);
+    return { success: false, error: err && err.message ? err.message : String(err) };
   }
 };
-
 
 const sendTicketEmail = async ({
   to,
@@ -67,7 +68,6 @@ const sendTicketEmail = async ({
   ticketCode,
   qrCode,
 }) => {
-
   const html = ticketConfirmationTemplate({
     userName,
     eventTitle,
@@ -76,7 +76,6 @@ const sendTicketEmail = async ({
     seatLabel,
     ticketCode,
   });
-
 
   return sendEmail({
     to,
@@ -92,8 +91,6 @@ const sendTicketEmail = async ({
       : [],
   });
 };
-
-
 
 const ticketConfirmationTemplate = ({
   userName,
@@ -140,14 +137,14 @@ border-collapse:collapse;
 </tr>
 
 ${
-seatLabel
-? `
+  seatLabel
+    ? `
 <tr>
 <td><strong>Seat</strong></td>
 <td>${seatLabel}</td>
 </tr>
 `
-: ""
+    : ""
 }
 
 
@@ -170,8 +167,6 @@ See you there! 🎟️
 </div>
 `;
 
-
-
 const eventStatusTemplate = ({
   organizerName,
   eventTitle,
@@ -182,11 +177,7 @@ const eventStatusTemplate = ({
 <div style="font-family:Arial,sans-serif">
 
 <h2>
-Event ${
-  status === "approved"
-    ? "Approved ✅"
-    : "Rejected ❌"
-}
+Event ${status === "approved" ? "Approved ✅" : "Rejected ❌"}
 </h2>
 
 
@@ -205,19 +196,20 @@ by the admin team.
 
 
 ${
-reason
-? `
+  reason
+    ? `
 <p>
 <strong>Reason:</strong> ${reason}
 </p>
 `
-: ""
+    : ""
 }
 
 
 </div>
 
 `;
+
 const verificationEmailTemplate = ({ name, code }) => `
 <div style="font-family: Arial, sans-serif; max-width:600px; margin:auto;">
   <h2>Email Verification</h2>
@@ -241,8 +233,10 @@ const verificationEmailTemplate = ({ name, code }) => `
   <p>If you didn't create this account, simply ignore this email.</p>
 </div>
 `;
+
 module.exports = {
   sendEmail,
+  sendTicketEmail,
   ticketConfirmationTemplate,
   eventStatusTemplate,
   verificationEmailTemplate,
