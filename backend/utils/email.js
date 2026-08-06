@@ -1,15 +1,30 @@
 const fs = require("fs");
 const nodemailer = require("nodemailer");
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER?.toLowerCase?.() || (process.env.RESEND_API_KEY ? "resend" : "smtp");
+const useResend = EMAIL_PROVIDER === "resend";
+let resend;
+if (useResend) {
+  const { Resend } = require("resend");
+  resend = new Resend(process.env.RESEND_API_KEY?.trim());
+}
 
-const FROM_ADDRESS = process.env.EMAIL_FROM;
+const smtpOptions = {
+  host: process.env.EMAIL_HOST || "smtp.gmail.com",
+  port: Number(process.env.EMAIL_PORT) || 587,
+  secure: process.env.EMAIL_SECURE === "true",
+  auth: process.env.EMAIL_USER
+    ? {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      }
+    : undefined,
+};
+
+const transporter = nodemailer.createTransport(smtpOptions);
+
+const FROM_ADDRESS = process.env.EMAIL_FROM || (useResend ? "onboarding@resend.dev" : process.env.EMAIL_USER);
+
 const normalizeAttachments = (attachments = []) => {
   return attachments.map(({ filename, path }) => {
     if (path.startsWith("data:")) {
@@ -22,9 +37,16 @@ const normalizeAttachments = (attachments = []) => {
   });
 };
 
-const sendEmail = async ({ to, subject, html, attachments = [] }) => {
+const sendEmailWithNodemailer = async ({ to, subject, html, attachments = [] }) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    const errorMessage =
+      "SMTP is not configured. Set EMAIL_USER and EMAIL_PASS or use RESEND_API_KEY for Resend.";
+    console.error(errorMessage);
+    return { success: false, error: errorMessage };
+  }
   try {
     console.log("=== USING NODEMAILER ===");
+    console.log("SMTP options:", { host: smtpOptions.host, port: smtpOptions.port, secure: smtpOptions.secure });
 
     const info = await transporter.sendMail({
       from: FROM_ADDRESS,
@@ -44,13 +66,57 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
       },
     };
   } catch (err) {
-    console.error("Email send failed:", err);
+    console.error("Email send failed (nodemailer):", err);
 
     return {
       success: false,
       error: err.message,
     };
   }
+};
+
+const sendEmailWithResend = async ({ to, subject, html, attachments = [] }) => {
+  if (!resend) {
+    const errorMessage = "Resend API key is not configured. Set RESEND_API_KEY to use Resend.";
+    console.error(errorMessage);
+    return { success: false, error: errorMessage };
+  }
+  try {
+    console.log("=== USING RESEND ===");
+
+    const response = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+      attachments: normalizeAttachments(attachments),
+    });
+
+    console.log("Resend response:", response);
+
+    return {
+      success: true,
+      info: {
+        messageId: response?.id,
+        response: "accepted by Resend",
+      },
+    };
+  } catch (err) {
+    console.error("Email send failed (resend):", err);
+
+    return {
+      success: false,
+      error: err.message || String(err),
+    };
+  }
+};
+
+const sendEmail = async ({ to, subject, html, attachments = [] }) => {
+  if (useResend) {
+    return sendEmailWithResend({ to, subject, html, attachments });
+  }
+
+  return sendEmailWithNodemailer({ to, subject, html, attachments });
 };
 
 const sendTicketEmail = async ({

@@ -60,7 +60,12 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use((req, res, next) => {
   const requestOrigin = req.headers.origin?.trim();
-  if (!requestOrigin || allowedOrigins.includes(requestOrigin) || localDevOriginRegex.test(requestOrigin)) {
+  if (
+    !requestOrigin ||
+    allowedOrigins.includes(requestOrigin) ||
+    localDevOriginRegex.test(requestOrigin) ||
+    vercelOriginRegex.test(requestOrigin)
+  ) {
     res.header('Access-Control-Allow-Origin', requestOrigin || '*');
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
