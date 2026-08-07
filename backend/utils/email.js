@@ -4,8 +4,8 @@ const nodemailer = require("nodemailer");
 const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER?.toLowerCase?.();
 const hasSmtp = Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS);
 const hasResend = Boolean(process.env.RESEND_API_KEY?.trim());
-const useResend = EMAIL_PROVIDER === "resend" || (!EMAIL_PROVIDER && !hasSmtp && hasResend);
-const useSmtp = EMAIL_PROVIDER === "smtp" || (!EMAIL_PROVIDER && hasSmtp);
+const useResend = EMAIL_PROVIDER === "resend" || (!EMAIL_PROVIDER && hasResend);
+const useSmtp = EMAIL_PROVIDER === "smtp" || (!EMAIL_PROVIDER && !hasResend && hasSmtp);
 
 if (!useResend && !useSmtp) {
   console.error(
@@ -64,7 +64,15 @@ const normalizeAttachments = (attachments = []) => {
   });
 };
 
-const sendEmailWithNodemailer = async ({ to, subject, html, attachments = [] }) => {
+const htmlToText = (html = "") =>
+  html
+    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const sendEmailWithNodemailer = async ({ to, subject, html, text, attachments = [] }) => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     const errorMessage =
       "SMTP is not configured. Set EMAIL_USER and EMAIL_PASS or use RESEND_API_KEY for Resend.";
@@ -72,6 +80,7 @@ const sendEmailWithNodemailer = async ({ to, subject, html, attachments = [] }) 
     return { success: false, error: errorMessage };
   }
   try {
+    const resolvedText = text || htmlToText(html);
     console.log("=== USING NODEMAILER ===");
     console.log("SMTP options:", { host: smtpOptions.host, port: smtpOptions.port, secure: smtpOptions.secure });
 
@@ -80,16 +89,21 @@ const sendEmailWithNodemailer = async ({ to, subject, html, attachments = [] }) 
       to,
       subject,
       html,
+      text: resolvedText,
       attachments,
     });
 
-    console.log("Email sent:", info.messageId);
+    console.log("Email sent:", info.messageId, "response:", info.response);
 
     return {
       success: true,
       info: {
+        provider: "smtp",
         messageId: info.messageId,
         response: info.response,
+        accepted: info.accepted,
+        rejected: info.rejected,
+        envelope: info.envelope,
       },
     };
   } catch (err) {
@@ -97,7 +111,8 @@ const sendEmailWithNodemailer = async ({ to, subject, html, attachments = [] }) 
 
     return {
       success: false,
-      error: err.message,
+      error: err.message || String(err),
+      details: err,
     };
   }
 };
@@ -124,8 +139,10 @@ const sendEmailWithResend = async ({ to, subject, html, attachments = [] }) => {
     return {
       success: true,
       info: {
+        provider: "resend",
         messageId: response?.id,
-        response: "accepted by Resend",
+        status: response?.status || "accepted",
+        response,
       },
     };
   } catch (err) {
@@ -134,6 +151,7 @@ const sendEmailWithResend = async ({ to, subject, html, attachments = [] }) => {
     return {
       success: false,
       error: err.message || String(err),
+      details: err,
     };
   }
 };
