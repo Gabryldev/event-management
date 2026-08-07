@@ -41,7 +41,7 @@ const registerUser = asyncHandler(async (req, res) => {
     verificationCodeExpire: Date.now() + 10 * 60 * 1000,
   });
 
-  await sendEmail({
+  const emailResult = await sendEmail({
     to: user.email,
     subject: "Verify Your Email",
     html: verificationEmailTemplate({
@@ -49,6 +49,16 @@ const registerUser = asyncHandler(async (req, res) => {
       code: verificationCode,
     }),
   });
+
+  if (!emailResult.success) {
+    console.error("Verification email failed for:", user.email, emailResult.error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to send verification email. Please try again later.",
+      error: emailResult.error,
+    });
+  }
 
   const responsePayload = {
     success: true,
@@ -61,6 +71,8 @@ const registerUser = asyncHandler(async (req, res) => {
     responsePayload.debug = {
       sentTo: user.email,
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      verificationCode,
+      emailResult: emailResult.info || emailResult.error,
     };
   }
 

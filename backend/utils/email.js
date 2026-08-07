@@ -1,8 +1,27 @@
 const fs = require("fs");
 const nodemailer = require("nodemailer");
 
-const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER?.toLowerCase?.() || (process.env.RESEND_API_KEY ? "resend" : "smtp");
-const useResend = EMAIL_PROVIDER === "resend";
+const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER?.toLowerCase?.();
+const hasSmtp = Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+const hasResend = Boolean(process.env.RESEND_API_KEY?.trim());
+const useResend = EMAIL_PROVIDER === "resend" || (!EMAIL_PROVIDER && !hasSmtp && hasResend);
+const useSmtp = EMAIL_PROVIDER === "smtp" || (!EMAIL_PROVIDER && hasSmtp);
+
+if (!useResend && !useSmtp) {
+  console.error(
+    "No email provider configured. Set EMAIL_PROVIDER=smtp and SMTP creds, or set RESEND_API_KEY for Resend."
+  );
+}
+
+console.log("Email provider config:", {
+  EMAIL_PROVIDER,
+  hasSmtp,
+  hasResend,
+  useSmtp,
+  useResend,
+  FROM_ADDRESS: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+});
+
 let resend;
 if (useResend) {
   const { Resend } = require("resend");
@@ -13,7 +32,7 @@ const smtpOptions = {
   host: process.env.EMAIL_HOST || "smtp.gmail.com",
   port: Number(process.env.EMAIL_PORT) || 587,
   secure: process.env.EMAIL_SECURE === "true",
-  auth: process.env.EMAIL_USER
+  auth: hasSmtp
     ? {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -22,6 +41,14 @@ const smtpOptions = {
 };
 
 const transporter = nodemailer.createTransport(smtpOptions);
+
+if (!useResend && smtpOptions.auth) {
+  transporter.verify().then(() => {
+    console.log('SMTP transporter verified');
+  }).catch((err) => {
+    console.error('SMTP transporter verification failed:', err && err.message ? err.message : err);
+  });
+}
 
 const FROM_ADDRESS = process.env.EMAIL_FROM || (useResend ? "onboarding@resend.dev" : process.env.EMAIL_USER);
 
@@ -116,7 +143,33 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
     return sendEmailWithResend({ to, subject, html, attachments });
   }
 
-  return sendEmailWithNodemailer({ to, subject, html, attachments });
+  const smtpResult = await sendEmailWithNodemailer({ to, subject, html, attachments });
+  if (smtpResult.success || !hasResend) {
+    return smtpResult;
+  }
+
+  console.warn('SMTP failed, falling back to Resend:', smtpResult.error);
+  if (!resend) {
+    const errorMessage = 'Resend is not configured for fallback. Set RESEND_API_KEY to use Resend.';
+    console.error(errorMessage);
+    return { success: false, error: `${smtpResult.error}; fallback failed: ${errorMessage}` };
+  }
+
+  const resendResult = await sendEmailWithResend({ to, subject, html, attachments });
+  if (resendResult.success) {
+    return {
+      success: true,
+      info: {
+        fallback: 'resend',
+        ...resendResult.info,
+      },
+    };
+  }
+
+  return {
+    success: false,
+    error: `SMTP error: ${smtpResult.error}; Resend fallback error: ${resendResult.error}`,
+  };
 };
 
 const sendTicketEmail = async ({

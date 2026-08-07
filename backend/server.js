@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const { sendEmail } = require('./utils/email');
 
 const app = express();
 
@@ -58,6 +59,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use((req, res, next) => {
   const requestOrigin = req.headers.origin?.trim();
   if (
@@ -86,6 +88,23 @@ console.log("✅ Auth routes loaded");
 app.use('/api/events', eventRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/analytics', analyticsRoutes);
+
+// Dev-only email test endpoint (returns send result)
+if (process.env.NODE_ENV !== 'production') {
+  app.post('/api/debug/send-email', express.json(), async (req, res) => {
+    const { to, subject, html } = req.body;
+    if (!to || !subject || !html) {
+      return res.status(400).json({ success: false, message: 'to, subject, html are required' });
+    }
+    try {
+      const result = await sendEmail({ to, subject, html });
+      return res.json({ success: true, result });
+    } catch (err) {
+      console.error('Debug send-email error', err);
+      return res.status(500).json({ success: false, error: String(err) });
+    }
+  });
+}
 
 app.use(notFound);
 app.use(errorHandler);
