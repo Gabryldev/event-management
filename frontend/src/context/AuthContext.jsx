@@ -45,18 +45,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   // REGISTER (Email Verification)
-  const register = async (name, email, password, role) => {
-    const res = await api.post("/auth/register", {
-      name,
-      email,
-      password,
-      role,
-    });
+ const register = async (name, email, password, role) => {
+  const res = await api.post("/auth/register", {
+    name,
+    email,
+    password,
+    role,
+  });
 
-    // Don't log the user in yet.
-    // Backend sends verification code to email.
-    return res.data;
-  };
+  localStorage.setItem("token", res.data.data.token);
+
+  await getCurrentUser();
+
+  return res.data.data;
+};
 
   // UPDATE PROFILE
   const updateProfile = async (profileData) => {

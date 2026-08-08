@@ -28,39 +28,37 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setError("");
-    setLoading(true);
+  setError("");
+  setLoading(true);
 
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
+  if (form.password !== form.confirmPassword) {
+    setError("Passwords do not match");
+    setLoading(false);
+    return;
+  }
 
-   try {
-  const res = await register(
-    form.name,
-    form.email,
-    form.password,
-    form.role
-  );
+  try {
+    await register(
+      form.name,
+      form.email,
+      form.password,
+      form.role
+    );
 
-  navigate("/verify-email", {
-    state: {
-      email: res.email || form.email,
-    },
-  });
-} catch (err) {
-      setError(
-        err.response?.data?.message || "Registration failed"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Email verification has been removed.
+    // Go directly to login.
+    navigate("/");
+  } catch (err) {
+    setError(
+      err.response?.data?.message || "Registration failed"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
  return (
   <div className="bg-slate-100 py-8 px-4">
@@ -221,3 +219,4 @@ const Register = () => {
 };
 
 export default Register;
+
