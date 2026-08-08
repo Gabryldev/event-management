@@ -1,13 +1,10 @@
 const crypto = require("crypto");
-const { sendEmail,verificationEmailTemplate,} = require("../utils/email");
+const { sendEmail } = require("../utils/email");
 const asyncHandler = require("express-async-handler");
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 
 // ================= REGISTER =================
-
-
- // ================= REGISTER =================
 
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -28,102 +25,19 @@ const registerUser = asyncHandler(async (req, res) => {
     ? role
     : "user";
 
-  const verificationCode = Math.floor(
-    100000 + Math.random() * 900000
-  ).toString();
-
   const user = await User.create({
     name,
     email,
     password,
     role: allowedRole,
-    verificationCode,
-    verificationCodeExpire: Date.now() + 10 * 60 * 1000,
+
+    // No email verification required
+    isVerified: true,
   });
 
-  const emailResult = await sendEmail({
-    to: user.email,
-    subject: "Verify Your Email",
-    html: verificationEmailTemplate({
-      name: user.name,
-      code: verificationCode,
-    }),
-  });
-
-  if (!emailResult.success) {
-    console.error("Verification email failed for:", user.email, emailResult.error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Unable to send verification email. Please try again later.",
-      error: emailResult.error,
-    });
-  }
-
-  const responsePayload = {
+  res.status(201).json({
     success: true,
-    message:
-      "Verification code sent successfully. Please check your email.",
-    email: user.email,
-  };
-
-  if (process.env.NODE_ENV !== "production") {
-    responsePayload.debug = {
-      sentTo: user.email,
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-      verificationCode,
-      emailResult: emailResult.info || emailResult.error,
-    };
-  }
-
-  res.status(201).json(responsePayload);
-});
-const verifyEmail = asyncHandler(async (req, res) => {
-  const { email, code } = req.body;
-
-  if (!email || !code) {
-    res.status(400);
-    throw new Error("Email and verification code are required");
-  }
-
-  const user = await User.findOne({ email }).select("+password");
-
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
-  }
-
-  if (user.isVerified) {
-    return res.status(200).json({
-      success: true,
-      message: "Email already verified",
-      data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id, user.role),
-      },
-    });
-  }
-
-  if (
-    user.verificationCode !== code ||
-    user.verificationCodeExpire < Date.now()
-  ) {
-    res.status(400);
-    throw new Error("Invalid or expired verification code");
-  }
-
-  user.isVerified = true;
-  user.verificationCode = undefined;
-  user.verificationCodeExpire = undefined;
-
-  await user.save();
-
-  res.status(200).json({
-    success: true,
-    message: "Email verified successfully",
+    message: "Registration successful",
     data: {
       _id: user._id,
       name: user.name,
@@ -133,9 +47,9 @@ const verifyEmail = asyncHandler(async (req, res) => {
     },
   });
 });
-  
 
 // ================= LOGIN =================
+
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -151,10 +65,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid email or password");
   }
 
-  if (!user.isVerified) {
-    res.status(401);
-    throw new Error("Please verify your email before logging in.");
-  }
+  // No email verification check here
 
   res.json({
     success: true,
@@ -222,50 +133,54 @@ const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+    const resetUrl =
+      `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
-console.log("Forgot password request received for:", email);
+    console.log(
+      "Forgot password request received for:",
+      email
+    );
 
-const result = await sendEmail({
-  to: user.email,
-  subject: "Password Reset",
-  html: `
-    <h2>Password Reset</h2>
+    const result = await sendEmail({
+      to: user.email,
+      subject: "Password Reset",
+      html: `
+        <div style="font-family:Arial,sans-serif;">
+          <h2>Password Reset</h2>
 
-    <p>You requested a password reset.</p>
+          <p>You requested a password reset.</p>
 
-    <p>
-      <a href="${resetUrl}">
-        Reset Password
-      </a>
-    </p>
-  `,
-});
+          <p>
+            <a href="${resetUrl}">
+              Reset Password
+            </a>
+          </p>
 
-console.log("sendEmail result:", result);
-if (!result.success) {
-  console.error("Forgot password email failed for:", email, result.error);
-  return res.status(500).json({
-    success: false,
-    message: "Failed to send reset email. Check email settings.",
-    error: result.error,
-  });
-}
+          <p>This link expires in 10 minutes.</p>
+        </div>
+      `,
+    });
 
-    const responsePayload = {
-      success: true,
-      message: "Password reset email sent",
-    };
+    console.log("sendEmail result:", result);
 
-    if (process.env.NODE_ENV !== "production") {
-      responsePayload.debug = {
-        messageId: result.info?.messageId,
-        response: result.info?.response,
-        sentTo: user.email,
-      };
+    if (!result.success) {
+      console.error(
+        "Forgot password email failed for:",
+        email,
+        result.error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send reset email.",
+        error: result.error,
+      });
     }
 
-    res.json(responsePayload);
+    res.json({
+      success: true,
+      message: "Password reset email sent",
+    });
   } catch (err) {
     console.log(err);
 
@@ -331,7 +246,6 @@ const getMe = asyncHandler(async (req, res) => {
 
 module.exports = {
   registerUser,
-  verifyEmail,
   loginUser,
   getMe,
   updateProfile,

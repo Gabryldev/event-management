@@ -23,6 +23,5 @@ router.put("/reset-password/:token", resetPassword);
 
 // Private
 router.get("/me", protect, getMe);
-router.patch("/profile", protect, updateProfile);
-router.post("/verify-email", verifyEmail);
+router.patch("/profile", protect, updateProfile)
 module.exports = router;
