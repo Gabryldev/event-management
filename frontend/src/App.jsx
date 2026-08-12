@@ -16,20 +16,27 @@ import MyEvents from './pages/MyEvents';
 import EventAnalytics from './pages/EventAnalytics';
 import CheckIn from './pages/CheckIn';
 import AdminDashboard from './pages/AdminDashboard';
-
+import Dashboard from "./pages/Dashboard";
 function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/events/:id" element={<EventDetails />} />
+  {/* Home / Landing page */}
+  <Route path="/" element={<Home />} />
+
+  {/* Events Dashboard */}
+  <Route path="/events" element={<Dashboard />} />
+
+  {/* Individual Event */}
+  <Route path="/events/:id" element={<EventDetails />} />
+        
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/login" element={<Login />} />
-          <Route  path="/reset-password/:token" element={<ResetPassword />}/>
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/register" element={<Register />} />
-<Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
           <Route
             path="/my-tickets"
@@ -90,7 +97,7 @@ function App() {
           />
           <Route path="*" element={<div className="max-w-4xl mx-auto px-4 py-16 text-center text-slate-muted">Page not found</div>} />
         </Routes>
-           </main>
+      </main>
 
       <ToastContainer
         position="top-right"

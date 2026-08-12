@@ -16,45 +16,44 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
-    logout();
-    navigate("/");
-    setOpen(false);
-  };
-
+  logout();
+  navigate("/events");
+  setOpen(false);
+};
   return (
     <header className="bg-ink text-paper sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+{/* Brand — always goes to the main home page */}
+<Link
+  to="/"
+  onClick={() => setOpen(false)}
+  className="flex items-center gap-3 group font-display"
+>
+  <div className="w-10 h-10 rounded-xl bg-amber flex items-center justify-center shadow-lg group-hover:rotate-6 transition">
+    <span className="text-ink text-xl font-bold">✦</span>
+  </div>
 
-        {/* Brand */}
-        <Link
-          to="/"
-          className="flex items-center gap-3 group font-display"
-        >
-          <div className="w-10 h-10 rounded-xl bg-amber flex items-center justify-center shadow-lg group-hover:rotate-6 transition">
-            <span className="text-ink text-xl font-bold">✦</span>
-          </div>
+  <div className="leading-tight">
+    <h1 className="text-lg font-bold tracking-wide text-paper">
+      Event<span className="text-amber">Alchemists</span>
+    </h1>
 
-          <div className="leading-tight">
-            <h1 className="text-lg font-bold tracking-wide text-paper">
-              Event<span className="text-amber">Alchemists</span>
-            </h1>
-
-            <p className="text-[10px] uppercase tracking-[3px] text-paper/60">
-              Premium Experiences
-            </p>
-          </div>
-        </Link>
+    <p className="text-[10px] uppercase tracking-[3px] text-paper/60">
+      Premium Experiences
+    </p>
+  </div>
+</Link>
 
         {/* Desktop Menu */}
         <nav className="hidden md:flex items-center gap-6 text-sm">
 
-          <Link
-            to="/"
-            className="flex items-center gap-2 hover:text-amber transition"
-          >
-            <FaCalendarAlt />
-            Events
-          </Link>
+         <Link
+  to="/events"
+  className="flex items-center gap-2 hover:text-amber transition"
+>
+  <FaCalendarAlt />
+  Events
+</Link>
 
           {user && (
             <Link
@@ -189,13 +188,13 @@ const Navbar = () => {
 
           <div className="flex flex-col gap-5">
 
-            <Link
-              to="/"
-              onClick={() => setOpen(false)}
-              className="text-white hover:text-amber"
-            >
-              Browse Events
-            </Link>
+          <Link
+  to="/events"
+  onClick={() => setOpen(false)}
+  className="text-white hover:text-amber"
+>
+  Browse Events
+</Link>
 
             {user && (
               <Link

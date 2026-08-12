@@ -30,14 +30,13 @@ const Login = () => {
       const user = await login(form.email, form.password);
 
       console.log("Logged in user:", user);
-
-      if (user.role === "admin") {
-        navigate("/admin");
-      } else if (user.role === "organizer") {
-        navigate("/organizer/events");
-      } else {
-        navigate("/");
-      }
+if (user.role === "admin") {
+  navigate("/admin");
+} else if (user.role === "organizer") {
+  navigate("/organizer/events");
+} else {
+  navigate("/events");
+}
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     } finally {
