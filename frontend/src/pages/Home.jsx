@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import EventCard from '../components/EventCard';
 
@@ -54,6 +55,15 @@ const fetchEvents = async (q = "") => {
           <p className="text-paper/70 mt-3 max-w-xl">
             Browse approved events, reserve your seat, and get a QR ticket delivered straight to your inbox.
           </p>
+          <div className="flex gap-3 mt-6">
+  <Link to="/login" className="btn-outline !border-paper !text-paper">
+    Login
+  </Link>
+
+  <Link to="/register" className="btn-amber">
+    Join Now
+  </Link>
+</div>
           <form onSubmit={handleSearch} className="mt-8 flex gap-2 max-w-md">
            <input
   type="text"
