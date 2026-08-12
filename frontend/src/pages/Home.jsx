@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Home = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-ink text-paper">
 
       {/* HERO */}
       <section className="relative overflow-hidden">
-        
+
         {/* Background glow */}
         <div className="absolute top-20 right-[-150px] w-[500px] h-[500px] rounded-full bg-amber/10 blur-3xl pointer-events-none" />
 
@@ -27,13 +30,11 @@ const Home = () => {
 
               {/* Main heading */}
               <h1 className="font-display text-6xl md:text-7xl lg:text-8xl font-semibold leading-[0.95] tracking-tight">
-
                 Moments worth
 
                 <span className="block text-amber">
                   showing up for.
                 </span>
-
               </h1>
 
               {/* Description */}
@@ -46,7 +47,7 @@ const Home = () => {
               {/* ACTION BUTTONS */}
               <div className="flex flex-wrap items-center gap-4 mt-10">
 
-                {/* Browse */}
+                {/* Always available */}
                 <Link
                   to="/events"
                   className="
@@ -72,43 +73,71 @@ const Home = () => {
                   </span>
                 </Link>
 
-                {/* LOGIN */}
-                <Link
-                  to="/login"
-                  className="
-                    px-6
-                    py-3.5
-                    rounded-xl
-                    border
-                    border-paper/30
-                    text-paper
-                    font-semibold
-                    hover:border-amber
-                    hover:text-amber
-                    transition
-                  "
-                >
-                  Login
-                </Link>
+                {/* Before login */}
+                {!user && (
+                  <>
+                    <Link
+                      to="/login"
+                      className="
+                        px-6
+                        py-3.5
+                        rounded-xl
+                        border
+                        border-paper/30
+                        text-paper
+                        font-semibold
+                        hover:border-amber
+                        hover:text-amber
+                        transition
+                      "
+                    >
+                      Login
+                    </Link>
 
-                {/* SIGN UP */}
-                <Link
-                  to="/register"
-                  className="
-                    px-6
-                    py-3.5
-                    rounded-xl
-                    border
-                    border-paper/30
-                    text-paper
-                    font-semibold
-                    hover:border-amber
-                    hover:text-amber
-                    transition
-                  "
-                >
-                  Create an account
-                </Link>
+                    <Link
+                      to="/register"
+                      className="
+                        px-6
+                        py-3.5
+                        rounded-xl
+                        border
+                        border-paper/30
+                        text-paper
+                        font-semibold
+                        hover:border-amber
+                        hover:text-amber
+                        transition
+                      "
+                    >
+                      Create an account
+                    </Link>
+                  </>
+                )}
+
+                {/* After login */}
+                {user && (
+                  <>
+                    
+
+                    <Link
+                      to="/my-tickets"
+                      className="
+                        px-6
+                        py-3.5
+                        rounded-xl
+                        border
+                        border-paper/30
+                        text-paper
+                        font-semibold
+                        hover:border-amber
+                        hover:text-amber
+                        transition
+                      "
+                    >
+                      My Tickets
+                    </Link>
+                  </>
+                )}
 
               </div>
 
