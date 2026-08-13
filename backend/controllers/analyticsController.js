@@ -3,9 +3,7 @@ const Event = require('../models/Event');
 const Ticket = require('../models/Ticket');
 const User = require('../models/User');
 
-// @desc Analytics for a single event (organizer)
-// @route GET /api/analytics/event/:eventId
-// @access Private/Organizer
+
 const getEventAnalytics = asyncHandler(async (req, res) => {
   const event = await Event.findById(req.params.eventId);
   if (!event) {
@@ -35,7 +33,7 @@ const getEventAnalytics = asyncHandler(async (req, res) => {
 const occupancyRate = event.capacity
   ? Math.round((totalTicketsSold / event.capacity) * 100)
   : 0;
-  // Sales over time (by day)
+  
   const salesByDay = {};
   tickets.forEach((t) => {
     const day = t.createdAt.toISOString().slice(0, 10);
@@ -98,9 +96,7 @@ const getOrganizerAnalytics = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc Platform-wide analytics (admin)
-// @route GET /api/analytics/admin
-// @access Private/Admin
+
 const getAdminAnalytics = asyncHandler(async (req, res) => {
   const [totalUsers, totalOrganizers, totalEvents, pendingEvents, approvedEvents, totalTickets] = await Promise.all([
     User.countDocuments({

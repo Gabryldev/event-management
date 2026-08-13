@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 
-// Verifies JWT and attaches req.user
+
 const protect = asyncHandler(async (req, res, next) => {
   let token;
   const authHeader = req.headers.authorization;
@@ -30,7 +30,6 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Restricts access to specific roles, e.g. authorize('admin', 'organizer')
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {

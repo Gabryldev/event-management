@@ -24,11 +24,11 @@ const ticketSchema = new mongoose.Schema({
   seatLabel: {
     type: String,
     default: null
-  }, // set if event.seatingType === 'assigned'
+  }, 
   quantity: {
     type: Number,
     default: 1
-  }, // used for general seating multi-ticket purchase
+  },
 
   pricePaid: {
     type: Number,

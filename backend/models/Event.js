@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 
 const seatSchema = new mongoose.Schema(
   {
-    label: { type: String, required: true }, // e.g. "A1"
+    label: { type: String, required: true }, 
     status: {
       type: String,
       enum: ['available', 'reserved', 'booked'],
       default: 'available',
     },
     ticket: { type: mongoose.Schema.Types.ObjectId, ref: 'Ticket', default: null },
-    // reservedUntil supports temporary holds while a user checks out
+  
     reservedUntil: { type: Date, default: null },
   },
   { _id: false }
@@ -29,16 +29,16 @@ const eventSchema = new mongoose.Schema(
 
     flyer: {
       url: { type: String, default: null },
-      publicId: { type: String, default: null }, // filename on disk
+      publicId: { type: String, default: null }, 
     },
 
     price: { type: Number, required: true, default: 0 },
 
-    // Seating: 'general' = capacity counter only, 'assigned' = seat map
+    
     seatingType: { type: String, enum: ['general', 'assigned'], default: 'general' },
-    capacity: { type: Number, required: true }, // total tickets/seats
-    seatsBooked: { type: Number, default: 0 }, // used when seatingType = general
-    seatMap: [seatSchema], // used when seatingType = assigned
+    capacity: { type: Number, required: true }, 
+    seatsBooked: { type: Number, default: 0 }, 
+    seatMap: [seatSchema], 
 
     status: {
       type: String,
@@ -62,7 +62,6 @@ eventSchema.virtual('seatsAvailable').get(function () {
 eventSchema.set('toJSON', { virtuals: true });
 eventSchema.set('toObject', { virtuals: true });
 
-// Helper to auto-generate a seat map (rows x cols) when seatingType = assigned
 eventSchema.virtual("seatsAvailable").get(function () {
   if (this.seatingType === "assigned") {
     return (this.seatMap || []).filter(

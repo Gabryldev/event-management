@@ -4,10 +4,6 @@ const Ticket = require('../models/Ticket');
 const { generateTicketQR, dataUrlToBuffer } = require('../utils/qrcode');
 const { sendEmail, ticketConfirmationTemplate } = require('../utils/email');
 
-// @desc Buy a ticket for an event (handles both general capacity & assigned seating)
-// @route POST /api/tickets/purchase
-// @access Private/User
-// body: { eventId, seatLabel? (required if event.seatingType === 'assigned'), quantity? (only for general) }
 const purchaseTicket = asyncHandler(async (req, res) => {
   const { eventId, seatLabel, quantity } = req.body;
 
@@ -35,7 +31,6 @@ const purchaseTicket = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error('seatLabel is required for events with assigned seating');
     }
-    // Atomic: only succeeds if the seat is currently 'available'
     updatedEvent = await Event.findOneAndUpdate(
       { _id: eventId, seatMap: { $elemMatch: { label: seatLabel, status: 'available' } } },
       { $set: { 'seatMap.$[elem].status': 'booked' } },
@@ -49,7 +44,6 @@ const purchaseTicket = asyncHandler(async (req, res) => {
   } else {
     ticketQuantity = Math.max(1, Number(quantity) || 1);
     pricePaid = event.price * ticketQuantity;
-    // Atomic: only succeeds if there's enough remaining capacity
     updatedEvent = await Event.findOneAndUpdate(
       { _id: eventId, $expr: { $lte: [{ $add: ['$seatsBooked', ticketQuantity] }, '$capacity'] } },
       { $inc: { seatsBooked: ticketQuantity } },
@@ -61,7 +55,6 @@ const purchaseTicket = asyncHandler(async (req, res) => {
     }
   }
 
-  // Create ticket record
   const ticket = await Ticket.create({
     event: event._id,
     user: req.user._id,
@@ -70,12 +63,11 @@ const purchaseTicket = asyncHandler(async (req, res) => {
     pricePaid,
   });
 
-  // Generate QR code (encodes ticketCode) and persist it on the ticket
   const qrDataUrl = await generateTicketQR(ticket.ticketCode);
   ticket.qrCode = qrDataUrl;
   await ticket.save();
 
-  // Link ticket back to the seat if assigned seating
+
   if (event.seatingType === 'assigned') {
     await Event.updateOne(
       { _id: eventId, 'seatMap.label': seatLabelAssigned },
@@ -83,7 +75,6 @@ const purchaseTicket = asyncHandler(async (req, res) => {
     );
   }
 
-  // Send confirmation email with QR attached (non-blocking on failure)
   sendEmail({
     to: req.user.email,
     subject: `Your ticket for ${event.title}`,
@@ -107,9 +98,6 @@ const purchaseTicket = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: ticket });
 });
 
-// @desc Get logged-in user's tickets
-// @route GET /api/tickets/mine
-// @access Private/User
 const getMyTickets = asyncHandler(async (req, res) => {
   const tickets = await Ticket.find({ user: req.user._id })
     .populate('event', 'title venue startDate endDate flyer')
@@ -117,9 +105,7 @@ const getMyTickets = asyncHandler(async (req, res) => {
   res.json({ success: true, count: tickets.length, data: tickets });
 });
 
-// @desc Get a single ticket (owner, event organizer, or admin)
-// @route GET /api/tickets/:id
-// @access Private
+
 const getTicketById = asyncHandler(async (req, res) => {
   const ticket = await Ticket.findById(req.params.id).populate('event').populate('user', 'name email');
   if (!ticket) {
@@ -135,10 +121,6 @@ const getTicketById = asyncHandler(async (req, res) => {
   res.json({ success: true, data: ticket });
 });
 
-// @desc Register attendance / check in a ticket by scanning its QR (ticketCode)
-// @route POST /api/tickets/check-in
-// @access Private/Organizer (or Admin)
-// body: { ticketCode }
 const checkInTicket = asyncHandler(async (req, res) => {
   const { ticketCode } = req.body;
   if (!ticketCode) {
@@ -178,9 +160,7 @@ const checkInTicket = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Attendance registered successfully', data: ticket });
 });
 
-// @desc Get all tickets/attendees for a specific event (organizer view)
-// @route GET /api/tickets/event/:eventId
-// @access Private/Organizer
+
 const getEventTickets = asyncHandler(async (req, res) => {
   const event = await Event.findById(req.params.eventId);
   if (!event) {

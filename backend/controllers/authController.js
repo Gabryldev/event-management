@@ -4,7 +4,6 @@ const asyncHandler = require("express-async-handler");
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 
-// ================= REGISTER =================
 
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -31,7 +30,6 @@ const registerUser = asyncHandler(async (req, res) => {
     password,
     role: allowedRole,
 
-    // No email verification required
     isVerified: true,
   });
 
@@ -48,7 +46,6 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 });
 
-// ================= LOGIN =================
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -65,7 +62,6 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid email or password");
   }
 
-  // No email verification check here
 
   res.json({
     success: true,
@@ -79,7 +75,6 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
-// ================= UPDATE PROFILE =================
 
 const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
@@ -106,7 +101,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   });
 });
 
-// ================= FORGOT PASSWORD =================
+
 
 const forgotPassword = async (req, res) => {
   try {
@@ -191,7 +186,7 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// ================= RESET PASSWORD =================
+
 
 const resetPassword = async (req, res) => {
   try {
@@ -235,7 +230,7 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// ================= GET CURRENT USER =================
+
 
 const getMe = asyncHandler(async (req, res) => {
   res.json({
