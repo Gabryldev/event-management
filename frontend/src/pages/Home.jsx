@@ -29,7 +29,7 @@ const Home = () => {
               </div>
 
               {/* Main heading */}
-              <h1 className="font-display text-4xl md:text-7xl lg:text-8xl font-semibold leading-[1] tracking-tight">
+            <h1 className="font-display text-2xl md:text-7xl lg:text-8xl font-semibold leading-[1.05] tracking-tight">
                 Moments worth
 
                 <span className="block text-amber">
